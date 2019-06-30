@@ -1,0 +1,7 @@
+[package]
+name = "mtasa-masterlist"
+version = "0.1.0"
+authors = ["nrzull <nrzull@tuta.io>"]
+edition = "2018"
+
+[dependencies]
