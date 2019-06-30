@@ -5,3 +5,5 @@ authors = ["nrzull <nrzull@tuta.io>"]
 edition = "2018"
 
 [dependencies]
+hyper = "0.12"
+hyper-tls = "0.3.2"
