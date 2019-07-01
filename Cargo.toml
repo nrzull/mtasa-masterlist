@@ -7,3 +7,5 @@ edition = "2018"
 [dependencies]
 hyper = "0.12"
 hyper-tls = "0.3.2"
+bytes = "0.4.12"
+byteorder = "1"
