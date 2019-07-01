@@ -29,47 +29,47 @@ const ASE_HAS_SPECIAL_FLAGS: u32 = 0x100000;
 
 #[derive(Debug)]
 pub struct Server {
-    pub ip: String,
-    pub port: u16,
-    pub players: u16,
-    pub maxplayers: u16,
-    pub gamename: String,
-    pub name: String,
-    pub gamemode: String,
-    pub map: String,
-    pub version: String,
-    pub password: u8,
-    pub serials: u8,
-    pub playerlist: Vec<String>,
-    pub responding: u8,
-    pub restriction: u32,
-    pub searchignore: Vec<(u8, u8)>,
-    pub keep: u8,
-    pub http: u16,
-    pub special: u8,
+    pub ip: Option<String>,
+    pub port: Option<u16>,
+    pub players: Option<u16>,
+    pub maxplayers: Option<u16>,
+    pub gamename: Option<String>,
+    pub name: Option<String>,
+    pub gamemode: Option<String>,
+    pub map: Option<String>,
+    pub version: Option<String>,
+    pub password: Option<u8>,
+    pub serials: Option<u8>,
+    pub playerlist: Option<Vec<String>>,
+    pub responding: Option<u8>,
+    pub restriction: Option<u32>,
+    pub searchignore: Option<Vec<(u8, u8)>>,
+    pub keep: Option<u8>,
+    pub http: Option<u16>,
+    pub special: Option<u8>,
 }
 
 impl Server {
     fn new() -> Server {
         Server {
-            ip: String::from(""),
-            port: 0,
-            players: 0,
-            maxplayers: 0,
-            gamename: String::from(""),
-            name: String::from(""),
-            gamemode: String::from(""),
-            map: String::from(""),
-            version: String::from(""),
-            password: 0,
-            serials: 0,
-            playerlist: vec![],
-            responding: 0,
-            restriction: 0,
-            searchignore: vec![],
-            keep: 0,
-            http: 0,
-            special: 0,
+            ip: None,
+            port: None,
+            players: None,
+            maxplayers: None,
+            gamename: None,
+            name: None,
+            gamemode: None,
+            map: None,
+            version: None,
+            password: None,
+            serials: None,
+            playerlist: None,
+            responding: None,
+            restriction: None,
+            searchignore: None,
+            keep: None,
+            http: None,
+            special: None,
         }
     }
 }
@@ -134,81 +134,87 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
             get_u8(&data, &mut offset),
         );
 
-        server.ip = String::from(format!("{}.{}.{}.{}", ip4, ip3, ip2, ip1));
-        server.port = get_u16(&data, &mut offset);
+        server.ip = Some(String::from(format!("{}.{}.{}.{}", ip4, ip3, ip2, ip1)));
+        server.port = Some(get_u16(&data, &mut offset));
 
         if has_player_count != 0 {
-            server.players = get_u16(&data, &mut offset);
+            server.players = Some(get_u16(&data, &mut offset));
         }
 
         if has_max_player_count != 0 {
-            server.maxplayers = get_u16(&data, &mut offset);
+            server.maxplayers = Some(get_u16(&data, &mut offset));
         }
 
         if has_game_name != 0 {
-            server.gamename = get_string(&data, &mut offset);
+            server.gamename = Some(get_string(&data, &mut offset));
         }
 
         if has_server_name != 0 {
-            server.name = get_string(&data, &mut offset);
+            server.name = Some(get_string(&data, &mut offset));
         }
 
         if has_game_mode != 0 {
-            server.gamemode = get_string(&data, &mut offset);
+            server.gamemode = Some(get_string(&data, &mut offset));
         }
 
         if has_map_mame != 0 {
-            server.map = get_string(&data, &mut offset);
+            server.map = Some(get_string(&data, &mut offset));
         }
 
         if has_server_version != 0 {
-            server.version = get_string(&data, &mut offset);
+            server.version = Some(get_string(&data, &mut offset));
         }
 
         if has_passworded_flag != 0 {
-            server.password = get_u8(&data, &mut offset);
+            server.password = Some(get_u8(&data, &mut offset));
         }
 
         if has_serials_slag != 0 {
-            server.serials = get_u8(&data, &mut offset);
+            server.serials = Some(get_u8(&data, &mut offset));
         }
 
         if has_player_list != 0 {
             let count = get_u16(&data, &mut offset);
+            let mut temp_storage = vec![];
 
             for _ in 0..count {
-                server.playerlist.push(get_string(&data, &mut offset));
+                temp_storage.push(get_string(&data, &mut offset));
             }
+
+            server.playerlist = Some(temp_storage);
         }
 
         if has_responding_flag != 0 {
-            server.responding = get_u8(&data, &mut offset);
+            server.responding = Some(get_u8(&data, &mut offset));
         }
 
         if has_restriction_flags != 0 {
-            server.restriction = get_u32(&data, &mut offset);
+            server.restriction = Some(get_u32(&data, &mut offset));
         }
 
         if has_search_ignore_sections != 0 {
             let count = get_u8(&data, &mut offset);
+            let mut temp_storage = vec![];
 
             for _ in 0..count {
                 let offst = get_u8(&data, &mut offset);
                 let lngth = get_u8(&data, &mut offset);
-                server.searchignore.push((offst, lngth));
+                temp_storage.push((offst, lngth));
             }
+
+            server.searchignore = Some(temp_storage);
         }
 
         if has_keep_flag != 0 {
-            server.keep = get_u8(&data, &mut offset);
+            server.keep = Some(get_u8(&data, &mut offset));
         }
 
         if has_http_port != 0 {
-            server.http = get_u16(&data, &mut offset);
+            server.http = Some(get_u16(&data, &mut offset));
         }
 
         if has_special != 0 {
-            server.special = get_u8(&data, &mut offset);
+            server.special = Some(get_u8(&data, &mut offset));
         }
 
         servers.push(server);
