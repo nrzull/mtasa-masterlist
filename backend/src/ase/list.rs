@@ -256,23 +256,25 @@ fn get_string(buffer: &Bytes, offset: &mut usize) -> String {
     let mut string = String::from("");
 
     let mut utf8_storage: Vec<u8> = vec![];
-    for _ in 0..length {
+    for i in 0..length {
         let character = get_u8(buffer, offset);
-        let mut current_target: &Vec<u8> = &vec![character];
+        utf8_storage.push(character);
 
-        if utf8_storage.len() != 0 {
-            utf8_storage.push(character);
-            current_target = &utf8_storage;
-        }
+        if i + 1 == length {
+            if let Ok(v) = std::str::from_utf8(&utf8_storage) {
+                string.push_str(v);
+            } else {
+                let mut safe_string = String::from("");
 
-        if let Ok(v) = std::str::from_utf8(current_target) {
-            string.push_str(v);
+                while let Some(v) = utf8_storage.pop() {
+                    if let Ok(a) = std::str::from_utf8(&vec![v]) {
+                        safe_string.push_str(a);
+                    }
+                }
 
-            if utf8_storage.len() != 0 {
-                utf8_storage = vec![];
+                let safe_string: String = safe_string.chars().rev().collect();
+                string.push_str(&safe_string);
             }
-        } else {
-            utf8_storage.push(character);
         }
     }
 
