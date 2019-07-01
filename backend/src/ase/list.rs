@@ -5,6 +5,9 @@ use hyper::Client;
 use hyper_tls::HttpsConnector;
 use std::io::Cursor;
 use std::ops::Deref;
+use std::sync::mpsc::Sender;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 const URI: &str = "https://master.multitheftauto.com/ase/mta/";
 const ASE_HAS_PLAYER_COUNT: u32 = 0x0004;
@@ -24,24 +27,8 @@ const ASE_HAS_KEEP_FLAG: u32 = 0x8000;
 const ASE_HAS_HTTP_PORT: u32 = 0x080000;
 const ASE_HAS_SPECIAL_FLAGS: u32 = 0x100000;
 
-pub fn get() {
-    rt::run(rt::lazy(|| {
-        let https = HttpsConnector::new(4).unwrap();
-        let client = Client::builder().build::<_, hyper::Body>(https);
-
-        client
-            .get(URI.parse().unwrap())
-            .and_then(|res| res.into_body().concat2())
-            .and_then(|res| {
-                process(res.into_bytes());
-                Ok(())
-            })
-            .map_err(|e| panic!("{}", e))
-    }));
-}
-
 #[derive(Debug)]
-struct Server {
+pub struct Server {
     pub ip: String,
     pub port: u16,
     pub players: u16,
@@ -87,8 +74,28 @@ impl Server {
     }
 }
 
-// TODO
-fn process(data: Bytes) {
+pub fn get(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>) {
+    rt::run(rt::lazy(move || {
+        let https = HttpsConnector::new(4).unwrap();
+        let client = Client::builder().build::<_, hyper::Body>(https);
+        let ok_tx = Arc::clone(&tx);
+        let err_tx = Arc::clone(&tx);
+
+        client
+            .get(URI.parse().unwrap())
+            .and_then(|res| res.into_body().concat2())
+            .and_then(move |res| {
+                process(ok_tx, res.into_bytes());
+                Ok(())
+            })
+            .map_err(move |e| {
+                eprintln!("{}", e);
+                err_tx.lock().unwrap().send(None).unwrap();
+            })
+    }));
+}
+
+fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
     let mut offset = 0usize;
     let _length = get_u16(&data, &mut offset);
     let _version = get_u16(&data, &mut offset);
@@ -207,6 +214,8 @@ fn process(data: Bytes) {
         servers.push(server);
         offset = next_offset;
     }
+
+    tx.lock().unwrap().send(Some(servers)).unwrap();
 }
 
 fn get_u8(buffer: &Bytes, offset: &mut usize) -> u8 {
