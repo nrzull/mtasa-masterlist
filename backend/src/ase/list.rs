@@ -249,11 +249,24 @@ fn get_string(buffer: &Bytes, offset: &mut usize) -> String {
     let length = get_u8(buffer, offset);
     let mut string = String::from("");
 
+    let mut utf8_storage: Vec<u8> = vec![];
     for _ in 0..length {
         let character = get_u8(buffer, offset);
+        let mut current_target: &Vec<u8> = &vec![character];
 
-        if let Ok(v) = std::str::from_utf8(&[character]) {
+        if utf8_storage.len() != 0 {
+            utf8_storage.push(character);
+            current_target = &utf8_storage;
+        }
+
+        if let Ok(v) = std::str::from_utf8(current_target) {
             string.push_str(v);
+
+            if utf8_storage.len() != 0 {
+                utf8_storage = vec![];
+            }
+        } else {
+            utf8_storage.push(character);
         }
     }
 
