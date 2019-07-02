@@ -1,3 +1,4 @@
+use crate::utils;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream, UdpSocket};
 use std::str;
 use std::time::Duration;
@@ -15,10 +16,14 @@ pub struct Server {
     ip: String,
 }
 
-pub fn get_info(ip: &str, port: u16) -> Server {
+pub fn get_info(ip: &str, port: u16) -> Option<Server> {
     let (tcp, udp) = get_tcp_and_udp_addrs(ip, port);
 
-    let buffer = get_buffer(tcp, udp);
+    let buffer = match get_buffer(tcp, udp) {
+        Some(v) => v,
+        None => return None,
+    };
+
     let buffer = buffer.as_slice();
     let buffer = &buffer[8..];
 
@@ -26,17 +31,19 @@ pub fn get_info(ip: &str, port: u16) -> Server {
     let mut length = 0;
     let mut end = 0;
 
-    Server {
+    let server = Server {
         ip: ip.to_owned(),
-        port: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-        name: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-        gamemode: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-        map: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-        version: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-        passworded: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-        playercount: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-        maxplayers: process(&buffer, &mut start, &mut end, &mut length).to_owned(),
-    }
+        port: process(&buffer, &mut start, &mut end, &mut length),
+        name: process(&buffer, &mut start, &mut end, &mut length),
+        gamemode: process(&buffer, &mut start, &mut end, &mut length),
+        map: process(&buffer, &mut start, &mut end, &mut length),
+        version: process(&buffer, &mut start, &mut end, &mut length),
+        passworded: process(&buffer, &mut start, &mut end, &mut length),
+        playercount: process(&buffer, &mut start, &mut end, &mut length),
+        maxplayers: process(&buffer, &mut start, &mut end, &mut length),
+    };
+
+    Some(server)
 }
 
 fn get_tcp_and_udp_addrs(ip: &str, port: u16) -> (SocketAddr, SocketAddr) {
@@ -52,38 +59,72 @@ fn get_tcp_and_udp_addrs(ip: &str, port: u16) -> (SocketAddr, SocketAddr) {
     (SocketAddr::new(ip, 80), SocketAddr::new(ip, port + 123))
 }
 
-fn get_buffer(tcp: SocketAddr, udp: SocketAddr) -> Vec<u8> {
-    let timeout = Duration::from_secs(5);
+fn get_buffer(tcp: SocketAddr, udp: SocketAddr) -> Option<Vec<u8>> {
+    let timeout = Duration::from_secs(1);
     let request_buffer = [115];
 
-    let _streamer = TcpStream::connect_timeout(&tcp, timeout)
-        .unwrap_or_else(|err| panic!("failed to connect to tcp remote server. {:?}", err));
+    let _streamer = match TcpStream::connect_timeout(&tcp, timeout) {
+        Ok(v) => v,
+        Err(err) => {
+            eprintln!("failed to connect to tcp remote server. {:?}", err);
+            return None;
+        }
+    };
 
-    let udp_socket = UdpSocket::bind("0.0.0.0:0")
-        .unwrap_or_else(|err| panic!("failed to connect to udp localhost server. {:?}", err));
+    let udp_socket = match UdpSocket::bind("0.0.0.0:0") {
+        Ok(v) => v,
+        Err(err) => {
+            eprintln!("failed to connect to udp localhost server. {:?}", err);
+            return None;
+        }
+    };
 
-    udp_socket
-        .connect(udp)
-        .unwrap_or_else(|err| panic!("failed to connect to udp remote server. {:?}", err));
+    match udp_socket.set_read_timeout(Some(timeout)) {
+        Ok(_) => (),
+        Err(_) => return None,
+    };
+
+    match udp_socket.set_write_timeout(Some(timeout)) {
+        Ok(_) => (),
+        Err(_) => return None,
+    };
+
+    match udp_socket.connect(udp) {
+        Ok(_) => (),
+        Err(err) => {
+            eprintln!("failed to connect to udp remote server. {:?}", err);
+            return None;
+        }
+    };
 
     let mut response = [0; 1024 * 100];
 
-    udp_socket
-        .send(&request_buffer)
-        .unwrap_or_else(|err| panic!("failed to send udp handshake {:?}", err));
+    match udp_socket.send(&request_buffer) {
+        Ok(_) => (),
+        Err(err) => {
+            eprintln!("failed to send udp handshake {:?}", err);
+            return None;
+        }
+    };
 
-    udp_socket
-        .recv(&mut response)
-        .unwrap_or_else(|err| panic!("failed to receive from udp {:?}", err));
+    match udp_socket.recv(&mut response) {
+        Ok(_) => (),
+        Err(err) => {
+            eprintln!("failed to receive from udp {:?}", err);
+            return None;
+        }
+    };
 
-    response
-        .iter()
-        .filter(|v| if **v == 0u8 { false } else { true })
-        .map(|v| *v)
-        .collect::<Vec<u8>>()
+    Some(
+        response
+            .iter()
+            .filter(|v| if **v == 0u8 { false } else { true })
+            .map(|v| *v)
+            .collect::<Vec<u8>>(),
+    )
 }
 
-fn process<'a>(buf: &'a [u8], start: &mut usize, end: &mut usize, length: &mut usize) -> &'a str {
+fn process<'a>(buf: &'a [u8], start: &mut usize, end: &mut usize, length: &mut usize) -> String {
     let length_char_length = 1;
 
     *end = *start + length_char_length;
@@ -93,5 +134,8 @@ fn process<'a>(buf: &'a [u8], start: &mut usize, end: &mut usize, length: &mut u
     let slice = &buf[*start..*end];
     *start = *end;
 
-    str::from_utf8(&slice).unwrap()
+    match str::from_utf8(&slice) {
+        Ok(v) => v.to_owned(),
+        Err(_) => utils::get_safe_string(slice.to_owned()),
+    }
 }
