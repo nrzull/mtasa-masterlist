@@ -1,3 +1,4 @@
+use crate::utils;
 use byteorder::{BigEndian, ReadBytesExt};
 use bytes::Bytes;
 use hyper::rt::{self, Future, Stream};
@@ -307,16 +308,7 @@ fn get_string(buffer: &Bytes, offset: &mut usize) -> String {
             if let Ok(v) = std::str::from_utf8(&utf8_storage) {
                 string.push_str(v);
             } else {
-                let mut safe_string = String::from("");
-
-                while let Some(v) = utf8_storage.pop() {
-                    if let Ok(a) = std::str::from_utf8(&vec![v]) {
-                        safe_string.push_str(a);
-                    }
-                }
-
-                let safe_string: String = safe_string.chars().rev().collect();
-                string.push_str(&safe_string);
+                string.push_str(&utils::get_safe_string(utf8_storage.clone()));
             }
         }
     }
