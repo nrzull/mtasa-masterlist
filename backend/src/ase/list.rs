@@ -5,9 +5,10 @@ use hyper::Client;
 use hyper_tls::HttpsConnector;
 use std::io::Cursor;
 use std::ops::Deref;
-use std::sync::mpsc::Sender;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::mpsc::{self, Sender};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 const URI: &str = "https://master.multitheftauto.com/ase/mta/";
 const ASE_HAS_PLAYER_COUNT: u32 = 0x0004;
@@ -27,7 +28,10 @@ const ASE_HAS_KEEP_FLAG: u32 = 0x8000;
 const ASE_HAS_HTTP_PORT: u32 = 0x080000;
 const ASE_HAS_SPECIAL_FLAGS: u32 = 0x100000;
 
-#[derive(Debug)]
+static mut CAN_FETCH: bool = true;
+static mut CACHED_LIST: Option<Vec<Server>> = None;
+
+#[derive(Debug, Clone)]
 pub struct Server {
     pub ip: Option<String>,
     pub port: Option<u16>,
@@ -74,7 +78,32 @@ impl Server {
     }
 }
 
-pub fn get(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>) {
+pub fn get() -> Option<Vec<Server>> {
+    unsafe {
+        if !CAN_FETCH {
+            if let Some(v) = &CACHED_LIST {
+                return Some(v.clone());
+            }
+        }
+    }
+
+    let (tx, rx) = mpsc::channel::<Option<Vec<Server>>>();
+    fetch(Arc::new(Mutex::new(tx)));
+
+    if let Ok(Some(v)) = rx.recv() {
+        unsafe {
+            CACHED_LIST = Some(v.clone());
+        }
+
+        allow_fetch_after(Duration::from_secs(10));
+
+        Some(v)
+    } else {
+        None
+    }
+}
+
+fn fetch(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>) {
     rt::run(rt::lazy(move || {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, hyper::Body>(https);
@@ -231,6 +260,20 @@ fn get_u8(buffer: &Bytes, offset: &mut usize) -> u8 {
     let mut cursor = Cursor::new(raw.to_owned());
 
     cursor.read_u8().unwrap()
+}
+
+fn allow_fetch_after(time: std::time::Duration) {
+    unsafe {
+        CAN_FETCH = false;
+    }
+
+    thread::spawn(move || {
+        thread::sleep(time);
+
+        unsafe {
+            CAN_FETCH = true;
+        }
+    });
 }
 
 fn get_u16(buffer: &Bytes, offset: &mut usize) -> u16 {
