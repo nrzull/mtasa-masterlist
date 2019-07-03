@@ -57,14 +57,29 @@ impl Server {
 }
 
 pub fn run() -> bool {
+    unsafe {
+        LIST = Some(Arc::new(Mutex::new(vec![])));
+    }
+
     let (tx, rx) = mpsc::channel::<bool>();
     fetch(Arc::new(Mutex::new(tx)));
 
     if let Ok(true) = rx.recv() {
+        loop_fetch();
         true
     } else {
         false
     }
+}
+
+fn loop_fetch() {
+    thread::spawn(|| {
+        thread::sleep(Duration::from_secs(30));
+        let (tx, rx) = mpsc::channel::<bool>();
+        fetch(Arc::new(Mutex::new(tx)));
+        rx.recv().unwrap_or_else(|_| true);
+        loop_fetch();
+    });
 }
 
 pub fn get() -> Option<Vec<Server>> {
@@ -89,9 +104,14 @@ fn fetch(tx: Arc<Mutex<Sender<bool>>>) {
             .and_then(|res| res.into_body().concat2())
             .and_then(move |res| {
                 let servers = process(res.into_bytes());
+
                 unsafe {
-                    LIST = Some(Arc::new(Mutex::new(servers)));
+                    if let Some(v) = &LIST {
+                        let mut data = v.lock().unwrap();
+                        *data = servers;
+                    }
                 }
+
                 ok_tx.lock().unwrap().send(true).unwrap();
                 Ok(())
             })
