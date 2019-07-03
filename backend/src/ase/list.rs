@@ -29,8 +29,7 @@ const ASE_HAS_KEEP_FLAG: u32 = 0x8000;
 const ASE_HAS_HTTP_PORT: u32 = 0x080000;
 const ASE_HAS_SPECIAL_FLAGS: u32 = 0x100000;
 
-static mut CAN_FETCH: bool = true;
-static mut CACHED_LIST: Option<Vec<Server>> = None;
+static mut LIST: Option<Arc<Mutex<Vec<Server>>>> = None;
 
 #[derive(Debug, Clone)]
 pub struct Server {
@@ -38,20 +37,9 @@ pub struct Server {
     pub port: Option<u16>,
     pub players: Option<u16>,
     pub maxplayers: Option<u16>,
-    // pub gamename: Option<String>,
     pub name: Option<String>,
-    // pub gamemode: Option<String>,
-    // pub map: Option<String>,
     pub version: Option<String>,
     pub password: Option<u8>,
-    // pub serials: Option<u8>,
-    // pub playerlist: Option<Vec<String>>,
-    // pub responding: Option<u8>,
-    // pub restriction: Option<u32>,
-    // pub searchignore: Option<Vec<(u8, u8)>>,
-    // pub keep: Option<u8>,
-    // pub http: Option<u16>,
-    // pub special: Option<u8>,
 }
 
 impl Server {
@@ -61,50 +49,35 @@ impl Server {
             port: None,
             players: None,
             maxplayers: None,
-            // gamename: None,
             name: None,
-            // gamemode: None,
-            // map: None,
             version: None,
             password: None,
-            // serials: None,
-            // playerlist: None,
-            // responding: None,
-            // restriction: None,
-            // searchignore: None,
-            // keep: None,
-            // http: None,
-            // special: None,
         }
+    }
+}
+
+pub fn run() -> bool {
+    let (tx, rx) = mpsc::channel::<bool>();
+    fetch(Arc::new(Mutex::new(tx)));
+
+    if let Ok(true) = rx.recv() {
+        true
+    } else {
+        false
     }
 }
 
 pub fn get() -> Option<Vec<Server>> {
     unsafe {
-        if !CAN_FETCH {
-            if let Some(v) = &CACHED_LIST {
-                return Some(v.clone());
-            }
+        if let Some(v) = &LIST {
+            Some(v.lock().unwrap().clone())
+        } else {
+            None
         }
-    }
-
-    let (tx, rx) = mpsc::channel::<Option<Vec<Server>>>();
-    fetch(Arc::new(Mutex::new(tx)));
-
-    if let Ok(Some(v)) = rx.recv() {
-        unsafe {
-            CACHED_LIST = Some(v.clone());
-        }
-
-        allow_fetch_after(Duration::from_secs(10));
-
-        Some(v)
-    } else {
-        None
     }
 }
 
-fn fetch(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>) {
+fn fetch(tx: Arc<Mutex<Sender<bool>>>) {
     rt::run(rt::lazy(move || {
         let https = HttpsConnector::new(4).unwrap();
         let client = Client::builder().build::<_, hyper::Body>(https);
@@ -115,17 +88,21 @@ fn fetch(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>) {
             .get(URI.parse().unwrap())
             .and_then(|res| res.into_body().concat2())
             .and_then(move |res| {
-                process(ok_tx, res.into_bytes());
+                let servers = process(res.into_bytes());
+                unsafe {
+                    LIST = Some(Arc::new(Mutex::new(servers)));
+                }
+                ok_tx.lock().unwrap().send(true).unwrap();
                 Ok(())
             })
             .map_err(move |e| {
                 eprintln!("{}", e);
-                err_tx.lock().unwrap().send(None).unwrap();
+                err_tx.lock().unwrap().send(false).unwrap();
             })
     }));
 }
 
-fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
+fn process(data: Bytes) -> Vec<Server> {
     let mut offset = 0usize;
     let _length = get_u16(&data, &mut offset);
     let _version = get_u16(&data, &mut offset);
@@ -176,7 +153,6 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
         }
 
         if has_game_name != 0 {
-            // server.gamename = Some(get_string(&data, &mut offset));
             get_string(&data, &mut offset);
         }
 
@@ -185,12 +161,10 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
         }
 
         if has_game_mode != 0 {
-            // server.gamemode = Some(get_string(&data, &mut offset));
             get_string(&data, &mut offset);
         }
 
         if has_map_mame != 0 {
-            // server.map = Some(get_string(&data, &mut offset));
             get_string(&data, &mut offset);
         }
 
@@ -203,59 +177,43 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
         }
 
         if has_serials_slag != 0 {
-            // server.serials = Some(get_u8(&data, &mut offset));
             get_u8(&data, &mut offset);
         }
 
         if has_player_list != 0 {
             let count = get_u16(&data, &mut offset);
-            // let mut temp_storage = vec![];
 
             for _ in 0..count {
-                // temp_storage.push(get_string(&data, &mut offset));
                 get_string(&data, &mut offset);
             }
-
-            // server.playerlist = Some(temp_storage);
         }
 
         if has_responding_flag != 0 {
-            // server.responding = Some(get_u8(&data, &mut offset));
             get_u8(&data, &mut offset);
         }
 
         if has_restriction_flags != 0 {
-            // server.restriction = Some(get_u32(&data, &mut offset));
             get_u32(&data, &mut offset);
         }
 
         if has_search_ignore_sections != 0 {
             let count = get_u8(&data, &mut offset);
-            // let mut temp_storage = vec![];
 
             for _ in 0..count {
                 get_u8(&data, &mut offset);
                 get_u8(&data, &mut offset);
-                // let offst = get_u8(&data, &mut offset);
-                // let lngth = get_u8(&data, &mut offset);
-                // temp_storage.push((offst, lngth));
             }
-
-            // server.searchignore = Some(temp_storage);
         }
 
         if has_keep_flag != 0 {
-            // server.keep = Some(get_u8(&data, &mut offset));
             get_u8(&data, &mut offset);
         }
 
         if has_http_port != 0 {
-            // server.http = Some(get_u16(&data, &mut offset));
             get_u16(&data, &mut offset);
         }
 
         if has_special != 0 {
-            // server.special = Some(get_u8(&data, &mut offset));
             get_u8(&data, &mut offset);
         }
 
@@ -263,7 +221,7 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
         offset = next_offset;
     }
 
-    tx.lock().unwrap().send(Some(servers)).unwrap();
+    servers
 }
 
 fn get_u8(buffer: &Bytes, offset: &mut usize) -> u8 {
@@ -273,20 +231,6 @@ fn get_u8(buffer: &Bytes, offset: &mut usize) -> u8 {
     let mut cursor = Cursor::new(raw.to_owned());
 
     cursor.read_u8().unwrap()
-}
-
-fn allow_fetch_after(time: std::time::Duration) {
-    unsafe {
-        CAN_FETCH = false;
-    }
-
-    thread::spawn(move || {
-        thread::sleep(time);
-
-        unsafe {
-            CAN_FETCH = true;
-        }
-    });
 }
 
 fn get_u16(buffer: &Bytes, offset: &mut usize) -> u16 {

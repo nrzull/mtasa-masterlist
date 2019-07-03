@@ -1,11 +1,16 @@
-use mtasa_masterlist::ase::list::{self, Server};
-use std::sync::{mpsc, Arc, Mutex};
+use mtasa_masterlist::ase;
+use std::thread;
 
 fn main() {
-    let (tx, rx) = mpsc::channel::<Option<Vec<Server>>>();
-    list::get(Arc::new(Mutex::new(tx)));
+    if ase::list::run() {
+        match ase::list::get() {
+            Some(v) => println!("{:?}", v.len()),
+            None => println!("None"),
+        };
 
-    if let Ok(Some(v)) = rx.recv() {
-        println!("{:?}", v);
+        match ase::list::get() {
+            Some(v) => println!("{:?}", v.len()),
+            None => println!("None"),
+        };
     }
 }
