@@ -38,20 +38,20 @@ pub struct Server {
     pub port: Option<u16>,
     pub players: Option<u16>,
     pub maxplayers: Option<u16>,
-    pub gamename: Option<String>,
+    // pub gamename: Option<String>,
     pub name: Option<String>,
-    pub gamemode: Option<String>,
-    pub map: Option<String>,
+    // pub gamemode: Option<String>,
+    // pub map: Option<String>,
     pub version: Option<String>,
     pub password: Option<u8>,
-    pub serials: Option<u8>,
-    pub playerlist: Option<Vec<String>>,
-    pub responding: Option<u8>,
-    pub restriction: Option<u32>,
-    pub searchignore: Option<Vec<(u8, u8)>>,
-    pub keep: Option<u8>,
-    pub http: Option<u16>,
-    pub special: Option<u8>,
+    // pub serials: Option<u8>,
+    // pub playerlist: Option<Vec<String>>,
+    // pub responding: Option<u8>,
+    // pub restriction: Option<u32>,
+    // pub searchignore: Option<Vec<(u8, u8)>>,
+    // pub keep: Option<u8>,
+    // pub http: Option<u16>,
+    // pub special: Option<u8>,
 }
 
 impl Server {
@@ -61,20 +61,20 @@ impl Server {
             port: None,
             players: None,
             maxplayers: None,
-            gamename: None,
+            // gamename: None,
             name: None,
-            gamemode: None,
-            map: None,
+            // gamemode: None,
+            // map: None,
             version: None,
             password: None,
-            serials: None,
-            playerlist: None,
-            responding: None,
-            restriction: None,
-            searchignore: None,
-            keep: None,
-            http: None,
-            special: None,
+            // serials: None,
+            // playerlist: None,
+            // responding: None,
+            // restriction: None,
+            // searchignore: None,
+            // keep: None,
+            // http: None,
+            // special: None,
         }
     }
 }
@@ -176,7 +176,8 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
         }
 
         if has_game_name != 0 {
-            server.gamename = Some(get_string(&data, &mut offset));
+            // server.gamename = Some(get_string(&data, &mut offset));
+            get_string(&data, &mut offset);
         }
 
         if has_server_name != 0 {
@@ -184,11 +185,13 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
         }
 
         if has_game_mode != 0 {
-            server.gamemode = Some(get_string(&data, &mut offset));
+            // server.gamemode = Some(get_string(&data, &mut offset));
+            get_string(&data, &mut offset);
         }
 
         if has_map_mame != 0 {
-            server.map = Some(get_string(&data, &mut offset));
+            // server.map = Some(get_string(&data, &mut offset));
+            get_string(&data, &mut offset);
         }
 
         if has_server_version != 0 {
@@ -200,51 +203,60 @@ fn process(tx: Arc<Mutex<Sender<Option<Vec<Server>>>>>, data: Bytes) {
         }
 
         if has_serials_slag != 0 {
-            server.serials = Some(get_u8(&data, &mut offset));
+            // server.serials = Some(get_u8(&data, &mut offset));
+            get_u8(&data, &mut offset);
         }
 
         if has_player_list != 0 {
             let count = get_u16(&data, &mut offset);
-            let mut temp_storage = vec![];
+            // let mut temp_storage = vec![];
 
             for _ in 0..count {
-                temp_storage.push(get_string(&data, &mut offset));
+                // temp_storage.push(get_string(&data, &mut offset));
+                get_string(&data, &mut offset);
             }
 
-            server.playerlist = Some(temp_storage);
+            // server.playerlist = Some(temp_storage);
         }
 
         if has_responding_flag != 0 {
-            server.responding = Some(get_u8(&data, &mut offset));
+            // server.responding = Some(get_u8(&data, &mut offset));
+            get_u8(&data, &mut offset);
         }
 
         if has_restriction_flags != 0 {
-            server.restriction = Some(get_u32(&data, &mut offset));
+            // server.restriction = Some(get_u32(&data, &mut offset));
+            get_u32(&data, &mut offset);
         }
 
         if has_search_ignore_sections != 0 {
             let count = get_u8(&data, &mut offset);
-            let mut temp_storage = vec![];
+            // let mut temp_storage = vec![];
 
             for _ in 0..count {
-                let offst = get_u8(&data, &mut offset);
-                let lngth = get_u8(&data, &mut offset);
-                temp_storage.push((offst, lngth));
+                get_u8(&data, &mut offset);
+                get_u8(&data, &mut offset);
+                // let offst = get_u8(&data, &mut offset);
+                // let lngth = get_u8(&data, &mut offset);
+                // temp_storage.push((offst, lngth));
             }
 
-            server.searchignore = Some(temp_storage);
+            // server.searchignore = Some(temp_storage);
         }
 
         if has_keep_flag != 0 {
-            server.keep = Some(get_u8(&data, &mut offset));
+            // server.keep = Some(get_u8(&data, &mut offset));
+            get_u8(&data, &mut offset);
         }
 
         if has_http_port != 0 {
-            server.http = Some(get_u16(&data, &mut offset));
+            // server.http = Some(get_u16(&data, &mut offset));
+            get_u16(&data, &mut offset);
         }
 
         if has_special != 0 {
-            server.special = Some(get_u8(&data, &mut offset));
+            // server.special = Some(get_u8(&data, &mut offset));
+            get_u8(&data, &mut offset);
         }
 
         servers.push(server);
