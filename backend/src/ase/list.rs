@@ -1,12 +1,14 @@
 use crate::utils;
 use byteorder::{BigEndian, ReadBytesExt};
 use bytes::Bytes;
-use hyper::rt::{self, Future, Stream};
+use futures::future::{self, Loop};
+use hyper::http::Request;
+use hyper::rt::{Future, Stream};
+use hyper::Body;
 use hyper::Client;
 use hyper_tls::HttpsConnector;
 use std::io::Cursor;
 use std::ops::Deref;
-use std::sync::mpsc::{self, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -29,6 +31,7 @@ const ASE_HAS_KEEP_FLAG: u32 = 0x8000;
 const ASE_HAS_HTTP_PORT: u32 = 0x080000;
 const ASE_HAS_SPECIAL_FLAGS: u32 = 0x100000;
 
+static mut LAST_MODIFIED_HEADER: Option<String> = None;
 static mut LIST: Option<Arc<Mutex<Vec<Server>>>> = None;
 
 #[derive(Debug, Clone)]
@@ -56,30 +59,26 @@ impl Server {
     }
 }
 
-pub fn run() -> bool {
+pub fn run() -> impl Future<Item = (), Error = ()> {
     unsafe {
         LIST = Some(Arc::new(Mutex::new(vec![])));
     }
 
-    let (tx, rx) = mpsc::channel::<bool>();
-    fetch(Arc::new(Mutex::new(tx)));
+    fetch()
+        .and_then(|_| {
+            future::loop_fn((), |state| {
+                thread::sleep(Duration::from_secs(30));
 
-    if let Ok(true) = rx.recv() {
-        loop_fetch();
-        true
-    } else {
-        false
-    }
-}
-
-fn loop_fetch() {
-    thread::spawn(|| {
-        thread::sleep(Duration::from_secs(30));
-        let (tx, rx) = mpsc::channel::<bool>();
-        fetch(Arc::new(Mutex::new(tx)));
-        rx.recv().unwrap_or_else(|_| true);
-        loop_fetch();
-    });
+                fetch().and_then(move |result| {
+                    if result {
+                        Ok(Loop::Continue(state))
+                    } else {
+                        Ok(Loop::Break(()))
+                    }
+                })
+            })
+        })
+        .map_err(|_err| ())
 }
 
 pub fn get() -> Option<Vec<Server>> {
@@ -92,34 +91,78 @@ pub fn get() -> Option<Vec<Server>> {
     }
 }
 
-fn fetch(tx: Arc<Mutex<Sender<bool>>>) {
-    rt::run(rt::lazy(move || {
-        let https = HttpsConnector::new(4).unwrap();
-        let client = Client::builder().build::<_, hyper::Body>(https);
-        let ok_tx = Arc::clone(&tx);
-        let err_tx = Arc::clone(&tx);
+fn fetch() -> impl Future<Item = bool, Error = bool> {
+    let head_https = HttpsConnector::new(4).unwrap();
+    let head_client = Client::builder().build::<_, hyper::Body>(head_https);
+    let head_req = Request::builder()
+        .method("HEAD")
+        .uri(URI)
+        .body(Body::from(""))
+        .unwrap();
 
-        client
-            .get(URI.parse().unwrap())
-            .and_then(|res| res.into_body().concat2())
-            .and_then(move |res| {
-                let servers = process(res.into_bytes());
+    head_client
+        .request(head_req)
+        .and_then(move |res| {
+            unsafe {
+                if let None = &LAST_MODIFIED_HEADER {
+                    LAST_MODIFIED_HEADER = Some(String::from(""));
+                }
+            }
+
+            let headers = res.headers();
+            let mut continue_fetch = true;
+
+            if let Some(v) = headers.get("last-modified") {
+                let v = v.to_owned().to_str().unwrap().to_owned();
 
                 unsafe {
-                    if let Some(v) = &LIST {
-                        let mut data = v.lock().unwrap();
-                        *data = servers;
+                    if let Some(a) = &LAST_MODIFIED_HEADER {
+                        if a == &v {
+                            continue_fetch = false
+                        } else {
+                            LAST_MODIFIED_HEADER = Some(v);
+                        }
                     }
                 }
+            } else {
+                continue_fetch = false
+            }
 
-                ok_tx.lock().unwrap().send(true).unwrap();
-                Ok(())
-            })
-            .map_err(move |e| {
-                eprintln!("{}", e);
-                err_tx.lock().unwrap().send(false).unwrap();
-            })
-    }));
+            if continue_fetch {
+                hyper::rt::spawn(fetch_force());
+                Ok(true)
+            } else {
+                Ok(true)
+            }
+        })
+        .map_err(move |e| {
+            eprintln!("{}", e);
+            false
+        })
+}
+
+fn fetch_force() -> impl Future<Item = (), Error = ()> {
+    let https = HttpsConnector::new(4).unwrap();
+    let client = Client::builder().build::<_, hyper::Body>(https);
+
+    client
+        .get(URI.parse().unwrap())
+        .and_then(|res| res.into_body().concat2())
+        .and_then(move |res| {
+            let servers = process(res.into_bytes());
+
+            unsafe {
+                if let Some(v) = &LIST {
+                    let mut data = v.lock().unwrap();
+                    *data = servers;
+                }
+            }
+
+            Ok(())
+        })
+        .map_err(move |e| {
+            eprintln!("{}", e);
+        })
 }
 
 fn process(data: Bytes) -> Vec<Server> {
