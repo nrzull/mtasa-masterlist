@@ -1,12 +1,7 @@
 use crate::utils;
 use byteorder::{BigEndian, ReadBytesExt};
 use bytes::Bytes;
-use futures::future::{self, Loop};
-use hyper::http::Request;
-use hyper::rt::{Future, Stream};
-use hyper::Body;
-use hyper::Client;
-use hyper_tls::HttpsConnector;
+use reqwest;
 use std::io::Cursor;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
@@ -59,26 +54,27 @@ impl Server {
     }
 }
 
-pub fn run() -> impl Future<Item = (), Error = ()> {
+pub fn run() {
     unsafe {
         LIST = Some(Arc::new(Mutex::new(vec![])));
     }
 
-    fetch()
-        .and_then(|_| {
-            future::loop_fn((), |state| {
-                thread::sleep(Duration::from_secs(30));
+    fetch().expect("can't fetch ase list");
+    fetch_loop();
+}
 
-                fetch().and_then(move |result| {
-                    if result {
-                        Ok(Loop::Continue(state))
-                    } else {
-                        Ok(Loop::Break(()))
-                    }
-                })
-            })
-        })
-        .map_err(|_err| ())
+fn fetch_loop() {
+    thread::spawn(|| {
+        thread::sleep(Duration::from_secs(30));
+
+        match fetch() {
+            Ok(_) => fetch_loop(),
+            Err(err) => {
+                eprintln!("{}", err);
+                fetch_loop()
+            }
+        }
+    });
 }
 
 pub fn get() -> Option<Vec<Server>> {
@@ -91,78 +87,70 @@ pub fn get() -> Option<Vec<Server>> {
     }
 }
 
-fn fetch() -> impl Future<Item = bool, Error = bool> {
-    let head_https = HttpsConnector::new(4).unwrap();
-    let head_client = Client::builder().build::<_, hyper::Body>(head_https);
-    let head_req = Request::builder()
-        .method("HEAD")
-        .uri(URI)
-        .body(Body::from(""))
-        .unwrap();
+pub fn fetch() -> Result<(), String> {
+    let head_client = reqwest::Client::new();
+    let response = head_client.head(URI).send();
 
-    head_client
-        .request(head_req)
-        .and_then(move |res| {
-            unsafe {
-                if let None = &LAST_MODIFIED_HEADER {
-                    LAST_MODIFIED_HEADER = Some(String::from(""));
+    if let Err(_) = response {
+        return Err("[HEAD] can't fetch".to_owned());
+    };
+
+    unsafe {
+        if let None = &LAST_MODIFIED_HEADER {
+            LAST_MODIFIED_HEADER = Some(String::from(""));
+        }
+    }
+
+    let response = response.unwrap();
+    let headers = response.headers();
+    let mut continue_fetch = true;
+
+    if let Some(v) = headers.get("Last-Modified") {
+        let v = v.to_owned().to_str().unwrap().to_owned();
+
+        unsafe {
+            if let Some(a) = &LAST_MODIFIED_HEADER {
+                if a == &v {
+                    continue_fetch = false
+                } else {
+                    LAST_MODIFIED_HEADER = Some(v);
                 }
             }
+        }
+    } else {
+        continue_fetch = false
+    }
 
-            let headers = res.headers();
-            let mut continue_fetch = true;
+    if continue_fetch {
+        match fetch_force() {
+            Ok(_) => (),
+            Err(text) => return Err(text),
+        }
+    }
 
-            if let Some(v) = headers.get("last-modified") {
-                let v = v.to_owned().to_str().unwrap().to_owned();
-
-                unsafe {
-                    if let Some(a) = &LAST_MODIFIED_HEADER {
-                        if a == &v {
-                            continue_fetch = false
-                        } else {
-                            LAST_MODIFIED_HEADER = Some(v);
-                        }
-                    }
-                }
-            } else {
-                continue_fetch = false
-            }
-
-            if continue_fetch {
-                hyper::rt::spawn(fetch_force());
-                Ok(true)
-            } else {
-                Ok(true)
-            }
-        })
-        .map_err(move |e| {
-            eprintln!("{}", e);
-            false
-        })
+    Ok(())
 }
 
-fn fetch_force() -> impl Future<Item = (), Error = ()> {
-    let https = HttpsConnector::new(4).unwrap();
-    let client = Client::builder().build::<_, hyper::Body>(https);
+fn fetch_force() -> Result<(), String> {
+    let response = reqwest::get(URI);
 
-    client
-        .get(URI.parse().unwrap())
-        .and_then(|res| res.into_body().concat2())
-        .and_then(move |res| {
-            let servers = process(res.into_bytes());
+    if let Err(_) = response {
+        return Err("[GET] can't fetch".to_owned());
+    }
 
-            unsafe {
-                if let Some(v) = &LIST {
-                    let mut data = v.lock().unwrap();
-                    *data = servers;
-                }
-            }
+    let mut buffer = vec![];
+    response.unwrap().copy_to(&mut buffer).unwrap();
 
-            Ok(())
-        })
-        .map_err(move |e| {
-            eprintln!("{}", e);
-        })
+    let servers = process(Bytes::from(buffer));
+
+    unsafe {
+        if let Some(v) = &LIST {
+            let mut data = v.lock().unwrap();
+            *data = servers;
+        }
+    }
+
+    Ok(())
 }
 
 fn process(data: Bytes) -> Vec<Server> {

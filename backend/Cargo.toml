@@ -6,8 +6,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
-hyper = "0.12"
-hyper-tls = "0.3.2"
+reqwest = "0.9.18"
 bytes = "0.4.12"
 byteorder = "1"
-futures = "*"
+actix-web = "1.0.3"

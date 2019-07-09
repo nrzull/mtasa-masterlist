@@ -1,16 +1,7 @@
 use mtasa_masterlist::ase;
-use std::thread;
+use mtasa_masterlist::server;
 
 fn main() {
-    if ase::list::run() {
-        match ase::list::get() {
-            Some(v) => println!("{:?}", v.len()),
-            None => println!("None"),
-        };
-
-        match ase::list::get() {
-            Some(v) => println!("{:?}", v.len()),
-            None => println!("None"),
-        };
-    }
+    ase::list::run();
+    server::app::run("127.0.0.1:8080".to_owned());
 }
