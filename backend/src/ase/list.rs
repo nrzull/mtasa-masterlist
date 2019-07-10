@@ -2,6 +2,7 @@ use crate::utils;
 use byteorder::{BigEndian, ReadBytesExt};
 use bytes::Bytes;
 use reqwest;
+use serde::Serialize;
 use std::io::Cursor;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
@@ -29,7 +30,7 @@ const ASE_HAS_SPECIAL_FLAGS: u32 = 0x100000;
 static mut LAST_MODIFIED_HEADER: Option<String> = None;
 static mut LIST: Option<Arc<Mutex<Vec<Server>>>> = None;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Server {
     pub ip: Option<String>,
     pub port: Option<u16>,
