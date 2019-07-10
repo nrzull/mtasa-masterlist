@@ -60,3 +60,24 @@
 .body__server:last-child > * {
   border-bottom: none;
 }
+
+.body__server-ip a {
+  text-transform: uppercase;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+}
+
+.body__server-ip a:hover {
+  color: var(--primary-color);
+}
+
+.body__server-ip a.disabled {
+  cursor: not-allowed;
+}
+
+.body__server-ip a.disabled:hover {
+  color: rgba(255, 255, 255, 0.2);
+}

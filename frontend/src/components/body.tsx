@@ -8,6 +8,7 @@ type TServer = {
   password: number;
   players: number;
   port: number;
+  keep: number;
   version: string;
 };
 
@@ -69,7 +70,8 @@ function Body() {
           <table className="body__list">
             <thead>
               <tr>
-                <td className="body__list-column-head" />
+                <td />
+                <td />
                 <td className="body__list-column-head">online</td>
                 <td className="body__list-column-head">version</td>
               </tr>
@@ -83,7 +85,14 @@ function Body() {
                 })
                 .map((server, i) => (
                   <tr key={i} className="body__server">
-                    <td className="bold">{server.name}</td>
+                    <td className="bold body__server-name">{server.name}</td>
+                    <td className="body__server-ip">
+                      {!!server.keep ? (
+                        <a href={`mtasa://${server.ip}:${server.port}`}>play</a>
+                      ) : (
+                        <a className="disabled">play</a>
+                      )}
+                    </td>
                     <td className="accent bold ">{server.players}</td>
                     <td className="bold">{parseFloat(server.version)}</td>
                   </tr>
