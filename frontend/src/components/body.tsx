@@ -36,7 +36,7 @@ function Body() {
 
   return (
     <div className="body">
-      <div className="body__container">
+      <div className="container">
         <div className="body__toolbox">
           <div className="body__stats">
             <span>
@@ -74,10 +74,10 @@ function Body() {
             })
             .map((server, i) => (
               <div key={i} className="body__server">
-                <div className="body__server-name">{server.name}</div>
+                <div className="bold">{server.name}</div>
 
                 <div className="body__server-labels">
-                  <div className="accent">{server.players}</div>
+                  <div className="accent bold">{server.players}</div>
                   <div>{server.version}</div>
                 </div>
               </div>

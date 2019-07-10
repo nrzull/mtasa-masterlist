@@ -1,12 +1,44 @@
 .header {
   padding-top: 2rem;
+}
+
+.header__logo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header__logo-image {
+  position: relative;
+  left: -2rem;
+  background-image: url("~@/assets/mta-logo.png");
+  width: 10rem;
+  height: 10rem;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.header__logo-text {
   color: var(--text-color);
   text-align: center;
   text-transform: uppercase;
-  font-size: 4.8rem;
-  letter-spacing: 0.3rem;
+  font-size: 2.2rem;
+  font-weight: 700;
+  border-bottom: 0.3rem solid var(--primary-color);
 }
 
-.header > span {
-  color: var(--primary-color);
+.header__logo-text span {
+  margin-right: 1rem;
+}
+
+.header__logo-text span:last-child {
+  margin-right: 0;
+}
+
+.header__logo-text span:first-child {
+  display: inline-block;
+  padding: 0 0.5rem;
+  background-color: var(--primary-color);
+  color: var(--background-color);
 }

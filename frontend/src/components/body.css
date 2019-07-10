@@ -1,18 +1,13 @@
 .body {
-  padding-top: 13rem;
+  padding-top: 2rem;
 }
 
 .body .accent {
   color: var(--primary-color);
 }
 
-.body__container {
-  max-width: 96rem;
-  margin: 0 auto;
-}
-
 .body__toolbox {
-  padding-bottom: 5rem;
+  padding-bottom: 4rem;
   text-transform: uppercase;
   font-weight: 700;
   font-size: 1.2rem;
@@ -36,10 +31,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.025);
   padding-bottom: 1rem;
   margin-bottom: 1rem;
   font-size: 1.4rem;
+}
+
+.body__server:last-child {
+  border-bottom: none;
 }
 
 .body__server-name {
