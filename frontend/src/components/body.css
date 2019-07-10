@@ -22,38 +22,41 @@
 
 .body__search {
   background-color: rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 0.1rem solid rgba(255, 255, 255, 0.08);
   color: var(--text-color);
   padding: 0.5rem 1rem;
 }
 
-.body__server {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.025);
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
-  font-size: 1.4rem;
-}
-
-.body__server:last-child {
+.body__list {
+  width: 100%;
+  background-color: #3a3a3a;
+  padding: 4rem 3rem 3rem;
+  box-shadow: 0 1rem 1rem rgba(0, 0, 0, 0.1);
+  border: 0.1rem solid rgba(255, 255, 255, 0.05);
   border-bottom: none;
 }
 
-.body__server-name {
+.body__list td {
+  text-align: center;
+  min-width: 6rem;
+}
+
+.body__list td:first-child {
+  text-align: left;
+}
+
+.body__list-column-head {
+  font-size: 1rem;
+  text-transform: uppercase;
   font-weight: 700;
 }
 
-.body__server-labels {
-  display: flex;
-  align-items: center;
+.body__server > * {
+  border-bottom: 0.1rem solid rgba(255, 255, 255, 0.035);
+  padding: 1.75rem 0;
+  font-size: 1.4rem;
 }
 
-.body__server-labels > * {
-  padding: 0.5rem;
-  border-radius: 1rem;
-  margin-left: 1rem;
-  min-width: 3rem;
-  text-align: center;
+.body__server:last-child > * {
+  border-bottom: none;
 }

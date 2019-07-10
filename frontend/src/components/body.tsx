@@ -11,19 +11,19 @@ type TServer = {
   version: string;
 };
 
-type TList = TServer[];
+type TServerList = TServer[];
 
 function Body() {
-  const [list, setList] = useState<TList>([]);
+  const [list, setList] = useState<TServerList>([]);
   const [filter, setFilter] = useState("");
   const [filterRegex, setFilterRegex] = useState(new RegExp(""));
 
   const fetchData = () => {
     fetch("http://localhost:8081/api/list")
       .then(res => res.json())
-      .then((data: TList) => {
-        setList(data);
-        setTimeout(fetchData, 5000);
+      .then((servers: TServerList) => {
+        setList(servers.filter(s => !!s.name));
+        setTimeout(fetchData, 1000 * 30);
       });
   };
 
@@ -65,24 +65,32 @@ function Body() {
           </div>
         </div>
 
-        <div className="body__list">
-          {list
-            .sort((s1, s2) => (s1.players >= s2.players ? -1 : 1))
-            .filter(server => {
-              if (!filter) return server;
-              if (server.name.match(filterRegex)) return server;
-            })
-            .map((server, i) => (
-              <div key={i} className="body__server">
-                <div className="bold">{server.name}</div>
-
-                <div className="body__server-labels">
-                  <div className="accent bold">{server.players}</div>
-                  <div>{server.version}</div>
-                </div>
-              </div>
-            ))}
-        </div>
+        {!!list.length && (
+          <table className="body__list">
+            <thead>
+              <tr>
+                <td className="body__list-column-head" />
+                <td className="body__list-column-head">online</td>
+                <td className="body__list-column-head">version</td>
+              </tr>
+            </thead>
+            <tbody>
+              {list
+                .sort((s1, s2) => (s1.players >= s2.players ? -1 : 1))
+                .filter(server => {
+                  if (!filter) return server;
+                  if (server.name.match(filterRegex)) return server;
+                })
+                .map((server, i) => (
+                  <tr key={i} className="body__server">
+                    <td className="bold">{server.name}</td>
+                    <td className="accent bold ">{server.players}</td>
+                    <td className="bold">{parseFloat(server.version)}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
