@@ -1,4 +1,10 @@
-@import url("https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap");
+@import url("https://fonts.googleapis.com/css?family=Roboto:400,600&display=swap");
+
+:root {
+  --text-color: #eee;
+  --background-color: #333333;
+  --primary-color: #e97415;
+}
 
 html {
   font-size: 10px;
@@ -9,4 +15,7 @@ body {
   overflow-x: hidden;
   font-family: "Roboto", sans-serif;
   font-size: 1.6rem;
+  min-height: 100vh;
+  color: var(--text-color);
+  background-color: var(--background-color);
 }
