@@ -47,6 +47,12 @@ const config = {
         test: /\.css$/,
         exclude: SRC,
         use: [MiniCssExtractPlugin.loader, "css-loader"]
+      },
+
+      {
+        test: /\.png$/,
+        include: SRC,
+        use: "file-loader"
       }
     ]
   },
