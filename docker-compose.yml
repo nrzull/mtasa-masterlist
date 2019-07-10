@@ -1,0 +1,17 @@
+version: "3"
+services:
+  frontend:
+    container_name: frontend
+    image: mtasa-masterlist-frontend:latest
+    volumes:
+      - static:/temp
+    command: "cp -r dist /temp/frontend"
+  web:
+    container_name: web
+    build: ./web
+    ports:
+      - "80:80"
+    volumes:
+      - static:/usr/share/nginx
+volumes:
+  static:
