@@ -1,6 +1,9 @@
 import "./body.css";
 import React, { useEffect, useState } from "react";
 
+import PadlockIcon from "@/assets/padlock.svg";
+import GamepadIcon from "@/assets/gamepad.svg";
+
 type TServer = {
   ip: string;
   maxplayers: number;
@@ -79,7 +82,8 @@ function Body() {
             <thead>
               <tr>
                 <td />
-                <td />
+                <td className="body__list-column-head">public</td>
+                <td className="body__list-column-head">password</td>
                 <td className="body__list-column-head">online</td>
                 <td className="body__list-column-head">version</td>
               </tr>
@@ -90,10 +94,23 @@ function Body() {
                   <td className="bold body__server-name">{server.name}</td>
                   <td className="body__server-ip">
                     {!!server.version.includes("n") ? (
-                      <a className="disabled">private</a>
+                      <a>
+                        <GamepadIcon className="body__server-icon disabled" />
+                      </a>
                     ) : (
-                      <a href={`mtasa://${server.ip}:${server.port}`}>play</a>
+                      <a href={`mtasa://${server.ip}:${server.port}`}>
+                        <GamepadIcon
+                          data-accent="true"
+                          className="body__server-icon"
+                        />
+                      </a>
                     )}
+                  </td>
+                  <td>
+                    <PadlockIcon
+                      data-accent={!!server.password}
+                      className="body__server-icon"
+                    />
                   </td>
                   <td className="accent bold ">{server.players}</td>
                   <td className="bold">{parseFloat(server.version)}</td>

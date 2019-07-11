@@ -53,6 +53,12 @@ const config = {
         test: /\.png$/,
         include: SRC,
         use: "file-loader"
+      },
+
+      {
+        test: /\.svg$/,
+        include: SRC,
+        use: "react-svg-loader"
       }
     ]
   },
@@ -69,6 +75,9 @@ const config = {
       modules: false,
       chunks: false,
       children: false
+    },
+    proxy: {
+      "/api": "http://localhost:8081"
     }
   }
 };
