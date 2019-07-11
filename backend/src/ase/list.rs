@@ -36,7 +36,6 @@ pub struct Server {
     pub port: Option<u16>,
     pub players: Option<u16>,
     pub maxplayers: Option<u16>,
-    pub keep: Option<u8>,
     pub name: Option<String>,
     pub version: Option<String>,
     pub password: Option<u8>,
@@ -49,7 +48,6 @@ impl Server {
             port: None,
             players: None,
             maxplayers: None,
-            keep: None,
             name: None,
             version: None,
             password: None,
@@ -260,7 +258,7 @@ fn process(data: Bytes) -> Vec<Server> {
         }
 
         if has_keep_flag != 0 {
-            server.keep = Some(get_u8(&data, &mut offset));
+            get_u8(&data, &mut offset);
         }
 
         if has_http_port != 0 {

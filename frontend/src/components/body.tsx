@@ -8,7 +8,6 @@ type TServer = {
   password: number;
   players: number;
   port: number;
-  keep: number;
   version: string;
 };
 
@@ -87,10 +86,10 @@ function Body() {
                   <tr key={i} className="body__server">
                     <td className="bold body__server-name">{server.name}</td>
                     <td className="body__server-ip">
-                      {!!server.keep ? (
-                        <a href={`mtasa://${server.ip}:${server.port}`}>play</a>
+                      {!!server.version.includes("n") ? (
+                        <a className="disabled">private</a>
                       ) : (
-                        <a className="disabled">play</a>
+                        <a href={`mtasa://${server.ip}:${server.port}`}>play</a>
                       )}
                     </td>
                     <td className="accent bold ">{server.players}</td>
