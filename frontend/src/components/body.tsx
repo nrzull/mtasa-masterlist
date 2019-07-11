@@ -1,5 +1,8 @@
 import "./body.css";
 import React, { useState, ComponentProps } from "react";
+import { WindowScroller } from "react-virtualized/dist/es/WindowScroller";
+import { Table, Column } from "react-virtualized/dist/es/Table";
+import { AutoSizer } from "react-virtualized/dist/es/AutoSizer";
 
 import PadlockIcon from "@/assets/padlock.svg";
 import PlayIcon from "@/assets/play.svg";
@@ -8,6 +11,8 @@ import { TServerList } from "@/types";
 interface TProps extends ComponentProps<"div"> {
   list: TServerList;
 }
+
+const columns = 16;
 
 function Body(p: TProps) {
   const [filter, setFilter] = useState("");
@@ -23,19 +28,21 @@ function Body(p: TProps) {
     return servers.filter(server => server.name.match(filterRegex));
   };
 
+  const list = doFilter(p.list);
+
   return (
     <div className="body">
       <div className="container">
         <div className="body__toolbox">
           <div className="body__stats">
             <span>
-              servers: <span className="accent">{p.list.length}</span>
+              servers: <span className="text-accent">{list.length}</span>
             </span>
 
             <span>
               online:{" "}
-              <span className="accent">
-                {p.list.reduce((acc, curr) => {
+              <span className="text-accent">
+                {list.reduce((acc, curr) => {
                   acc += curr.players;
                   return acc;
                 }, 0)}
@@ -54,46 +61,98 @@ function Body(p: TProps) {
           </div>
         </div>
 
-        <table className="body__list">
-          <thead>
-            <tr>
-              <td />
-              <td className="body__list-column-head">public</td>
-              <td className="body__list-column-head">password</td>
-              <td className="body__list-column-head">online</td>
-              <td className="body__list-column-head">version</td>
-            </tr>
-          </thead>
-          <tbody>
-            {doFilter(p.list).map((server, i) => (
-              <tr key={i} className="body__server">
-                <td className="bold body__server-name">{server.name}</td>
-                <td className="body__server-ip">
-                  {!!server.version.includes("n") ? (
-                    <a>
-                      <PlayIcon className="body__server-icon disabled" />
-                    </a>
-                  ) : (
-                    <a href={`mtasa://${server.ip}:${server.port}`}>
-                      <PlayIcon
-                        data-accent="true"
-                        className="body__server-icon"
+        {!!list.length && (
+          <div className="body__list">
+            <WindowScroller>
+              {({ height, isScrolling, onChildScroll, scrollTop }) => (
+                <AutoSizer disableHeight>
+                  {({ width }) => (
+                    <Table
+                      height={height}
+                      isScrolling={isScrolling}
+                      onScroll={onChildScroll}
+                      scrollTop={scrollTop}
+                      width={width}
+                      rowHeight={60}
+                      rowCount={list.length}
+                      autoHeight
+                      headerHeight={40}
+                      headerClassName="body__list-head"
+                      rowClassName="body__list-row"
+                      rowGetter={({ index }) => list[index]}
+                    >
+                      <Column
+                        label=""
+                        dataKey="name"
+                        className="body__list-cell body__list-cell_name text-bold"
+                        width={width - (width / columns) * 4}
+                        cellRenderer={data => <>{data.rowData.name}</>}
                       />
-                    </a>
+
+                      <Column
+                        label="public"
+                        dataKey="public"
+                        className="body__list-cell"
+                        width={width / columns}
+                        cellRenderer={data =>
+                          data.rowData.version.includes("n") ? (
+                            <a>
+                              <PlayIcon className="body__server-icon body__server-icon_disabled" />
+                            </a>
+                          ) : (
+                            <a
+                              href={`mtasa://${data.rowData.ip}:${
+                                data.rowData.port
+                              }`}
+                            >
+                              <PlayIcon
+                                data-accent="true"
+                                className="body__server-icon"
+                              />
+                            </a>
+                          )
+                        }
+                      />
+
+                      <Column
+                        label="password"
+                        dataKey="password"
+                        className="body__list-cell"
+                        width={width / columns}
+                        cellRenderer={data => (
+                          <>
+                            <PadlockIcon
+                              data-accent={!!data.rowData.password}
+                              className="body__server-icon"
+                            />
+                          </>
+                        )}
+                      />
+
+                      <Column
+                        label="online"
+                        dataKey="online"
+                        className="body__list-cell text-bold text-accent"
+                        width={width / columns}
+                        cellRenderer={data => <>{data.rowData.players}</>}
+                      />
+
+                      <Column
+                        label="version"
+                        dataKey="version"
+                        className="body__list-cell text-bold"
+                        width={width / columns}
+                        cellRenderer={data => (
+                          <>{parseFloat(data.rowData.version)}</>
+                        )}
+                      />
+                    </Table>
                   )}
-                </td>
-                <td>
-                  <PadlockIcon
-                    data-accent={!!server.password}
-                    className="body__server-icon"
-                  />
-                </td>
-                <td className="accent bold ">{server.players}</td>
-                <td className="bold">{parseFloat(server.version)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </AutoSizer>
+              )}
+            </WindowScroller>
+          </div>
+        )}
       </div>
     </div>
   );

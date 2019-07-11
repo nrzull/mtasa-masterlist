@@ -2,10 +2,6 @@
   padding-top: 2rem;
 }
 
-.body .accent {
-  color: var(--primary-color);
-}
-
 .body__toolbox {
   padding-bottom: 4rem;
   text-transform: uppercase;
@@ -28,52 +24,20 @@
 }
 
 .body__list {
-  width: 100%;
   background-color: #3a3a3a;
-  padding: 4rem 3rem 3rem;
   box-shadow: 0 1rem 1rem rgba(0, 0, 0, 0.1);
   border: 0.1rem solid rgba(255, 255, 255, 0.05);
-  border-bottom: none;
-}
-
-.body__list td {
-  text-align: center;
-  min-width: 6rem;
-}
-
-.body__list td:first-child {
-  text-align: left;
-}
-
-.body__list-column-head {
-  font-size: 1rem;
-  text-transform: uppercase;
-  font-weight: 700;
-}
-
-.body__server > * {
-  border-bottom: 0.1rem solid rgba(255, 255, 255, 0.035);
-  padding: 1.75rem 0;
-  font-size: 1.3rem;
-}
-
-.body__server:last-child > * {
-  border-bottom: none;
-}
-
-.body__server-ip a {
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.disabled {
-  cursor: not-allowed;
+  padding: 5rem 3rem 0;
 }
 
 .body__server-icon {
   width: 1.6rem;
   height: 1.6rem;
   fill: rgba(255, 255, 255, 0.1);
+}
+
+.body__server-icon_disabled {
+  cursor: not-allowed;
 }
 
 .body__server-icon * {
@@ -86,4 +50,29 @@
 
 .body__server-icon[data-accent="true"] * {
   fill: var(--primary-color);
+}
+
+.body__list-row {
+  display: flex;
+  font-size: 1.3rem;
+  justify-content: space-between;
+  text-align: center;
+  border-bottom: 0.2rem solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+}
+
+.ReactVirtualized__Table__headerRow.body__list-row {
+  border: none;
+}
+
+.body__list-cell_name {
+  text-align: left;
+  padding: 5px;
+}
+
+.body__list-head {
+  font-size: 1rem;
+  text-transform: uppercase;
+  font-weight: 700;
 }

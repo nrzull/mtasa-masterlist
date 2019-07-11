@@ -6,6 +6,12 @@
   --primary-color: #e97415;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   font-size: 10px;
 }
@@ -24,8 +30,13 @@ body {
 .container {
   max-width: 96rem;
   margin: 0 auto;
+  position: relative;
 }
 
-.bold {
+.text-bold {
   font-weight: 700;
+}
+
+.text-accent {
+  color: var(--primary-color);
 }
