@@ -16,11 +16,30 @@
   margin-right: 2rem;
 }
 
+.body__search-container {
+  position: relative;
+}
+
 .body__search {
   background-color: rgba(0, 0, 0, 0.06);
   border: 0.1rem solid rgba(255, 255, 255, 0.08);
   color: var(--text-color);
   padding: 0.5rem 1rem;
+  padding-left: 2.7rem;
+}
+
+.body__search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.body__search:focus + .body__search-icon {
+  fill: var(--primary-color);
 }
 
 .body__list {

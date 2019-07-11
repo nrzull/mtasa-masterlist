@@ -4,9 +4,10 @@ import { WindowScroller } from "react-virtualized/dist/es/WindowScroller";
 import { Table, Column } from "react-virtualized/dist/es/Table";
 import { AutoSizer } from "react-virtualized/dist/es/AutoSizer";
 
+import { TServerList } from "@/types";
 import PadlockIcon from "@/assets/padlock.svg";
 import PlayIcon from "@/assets/play.svg";
-import { TServerList } from "@/types";
+import SearchIcon from "@/assets/search.svg";
 
 interface TProps extends ComponentProps<"div"> {
   list: TServerList;
@@ -50,7 +51,7 @@ function Body(p: TProps) {
             </span>
           </div>
 
-          <div>
+          <div className="body__search-container">
             <input
               className="body__search"
               onChange={onFilter}
@@ -58,6 +59,7 @@ function Body(p: TProps) {
               value={filter}
               placeholder="search"
             />
+            <SearchIcon className="body__search-icon" />
           </div>
         </div>
 
