@@ -22,7 +22,11 @@ function Body() {
     fetch("/api/list")
       .then(res => res.json())
       .then((servers: TServerList) => {
-        setList(servers.filter(s => !!s.name));
+        setList(
+          servers
+            .filter(s => !!s.name)
+            .sort((s1, s2) => (s1.players >= s2.players ? -1 : 1))
+        );
         setTimeout(fetchData, 1000 * 30);
       });
   };
@@ -32,6 +36,11 @@ function Body() {
   const onFilter = ev => {
     setFilter(ev.currentTarget.value);
     setFilterRegex(new RegExp(ev.currentTarget.value, "i"));
+  };
+
+  const doFilter = servers => {
+    if (!filter) return servers;
+    return servers.filter(server => server.name.match(filterRegex));
   };
 
   return (
@@ -76,26 +85,20 @@ function Body() {
               </tr>
             </thead>
             <tbody>
-              {list
-                .sort((s1, s2) => (s1.players >= s2.players ? -1 : 1))
-                .filter(server => {
-                  if (!filter) return server;
-                  if (server.name.match(filterRegex)) return server;
-                })
-                .map((server, i) => (
-                  <tr key={i} className="body__server">
-                    <td className="bold body__server-name">{server.name}</td>
-                    <td className="body__server-ip">
-                      {!!server.version.includes("n") ? (
-                        <a className="disabled">private</a>
-                      ) : (
-                        <a href={`mtasa://${server.ip}:${server.port}`}>play</a>
-                      )}
-                    </td>
-                    <td className="accent bold ">{server.players}</td>
-                    <td className="bold">{parseFloat(server.version)}</td>
-                  </tr>
-                ))}
+              {doFilter(list).map((server, i) => (
+                <tr key={i} className="body__server">
+                  <td className="bold body__server-name">{server.name}</td>
+                  <td className="body__server-ip">
+                    {!!server.version.includes("n") ? (
+                      <a className="disabled">private</a>
+                    ) : (
+                      <a href={`mtasa://${server.ip}:${server.port}`}>play</a>
+                    )}
+                  </td>
+                  <td className="accent bold ">{server.players}</td>
+                  <td className="bold">{parseFloat(server.version)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
