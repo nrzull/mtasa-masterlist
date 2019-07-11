@@ -20,7 +20,7 @@ function Body() {
   const [filterRegex, setFilterRegex] = useState(new RegExp(""));
 
   const fetchData = () => {
-    fetch("http://localhost:8081/api/list")
+    fetch("/api/list")
       .then(res => res.json())
       .then((servers: TServerList) => {
         setList(servers.filter(s => !!s.name));

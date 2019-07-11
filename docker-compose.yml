@@ -2,10 +2,17 @@ version: "3"
 services:
   frontend:
     container_name: frontend
-    image: mtasa-masterlist-frontend:latest
+    build: ./frontend
     volumes:
       - static:/temp
     command: "cp -r dist /temp/frontend"
+  backend:
+    container_name: backend
+    build: ./backend
+    expose:
+      - "8081"
+    networks:
+      - local-network
   web:
     container_name: web
     build: ./web
@@ -13,5 +20,9 @@ services:
       - "80:80"
     volumes:
       - static:/usr/share/nginx
+    networks:
+      - local-network
 volumes:
   static:
+networks:
+  local-network:
