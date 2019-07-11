@@ -64,7 +64,10 @@ const config = {
   },
   plugins: [
     new ForkTsCheckerPlugin(),
-    new HtmlPlugin({ template: path.resolve(SRC, "index.html") }),
+    new HtmlPlugin({
+      template: path.resolve(SRC, "index.html"),
+      favicon: path.resolve(SRC, "assets", "favicon.png")
+    }),
     new MiniCssExtractPlugin(),
     new DefinePlugin({
       "process.env.NODE_ENV": JSON.stringify(NODE_ENV)
