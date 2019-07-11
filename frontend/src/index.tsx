@@ -6,6 +6,7 @@ import { TServerList } from "@/types";
 
 import { Header } from "@/components/header";
 import { Body } from "@/components/body";
+import { Loading } from "@/components/loading";
 
 function App() {
   const [list, setList] = useState<TServerList>([]);
@@ -25,11 +26,13 @@ function App() {
 
   useEffect(fetchList, []);
 
+  if (list.length === 0) return <Loading />;
+
   return (
-    <div>
+    <>
       <Header />
       <Body list={list} />
-    </div>
+    </>
   );
 }
 
