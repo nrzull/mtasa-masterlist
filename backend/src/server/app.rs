@@ -1,5 +1,4 @@
 use crate::ase;
-use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpRequest, HttpServer, Responder};
 
 fn get_server_list(_req: HttpRequest) -> impl Responder {
@@ -14,11 +13,8 @@ pub fn run(addr: String) {
                 .service(web::scope("/list")
                     .route("", web::get().to(get_server_list)));
 
-        let cors = Cors::new().allowed_origin("*");
-
         App::new()
             .wrap(middleware::Logger::default())
-            .wrap(cors)
             .service(routes)
     })
     .bind(&addr)
