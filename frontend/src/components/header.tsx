@@ -6,7 +6,10 @@ function Header() {
     <div className="header">
       <div className="container">
         <div className="header__logo">
-          <div className="header__logo-image" />
+          <a target="_blank" rel="noopener" href="https://mtasa.com/">
+            <div className="header__logo-image" />
+          </a>
+
           <div className="header__logo-text">
             <span>m</span>
             <span>a</span>
