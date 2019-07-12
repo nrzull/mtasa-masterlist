@@ -64,6 +64,10 @@
   padding: 5rem 3rem 0;
 }
 
+.body__list * {
+  outline: none;
+}
+
 .body__server-icon {
   width: 1.6rem;
   height: 1.6rem;
