@@ -1,6 +1,3 @@
-import "whatwg-fetch";
-import "core-js";
-
 import "normalize.css";
 import "@/index.css";
 import React, { useState, useEffect } from "react";

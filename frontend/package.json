@@ -4,12 +4,10 @@
     "build": "cross-env NODE_ENV=production webpack -p"
   },
   "dependencies": {
-    "core-js": "^3.1.4",
     "normalize.css": "^8.0.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-virtualized": "^9.21.1",
-    "whatwg-fetch": "^3.0.0"
+    "react-virtualized": "^9.21.1"
   },
   "devDependencies": {
     "@types/react": "^16.8.23",
