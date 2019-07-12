@@ -35,18 +35,11 @@ const config = {
 
       {
         test: /\.css$/,
-        include: SRC,
         use: [
           MiniCssExtractPlugin.loader,
           { loader: "css-loader", options: { importLoaders: 1 } },
           "postcss-loader"
         ]
-      },
-
-      {
-        test: /\.css$/,
-        exclude: SRC,
-        use: [MiniCssExtractPlugin.loader, "css-loader"]
       },
 
       {
