@@ -12,6 +12,21 @@
   justify-content: space-between;
 }
 
+@media screen and (max-width: 450px) {
+  .body__toolbox {
+    display: block;
+    padding-bottom: 1rem;
+  }
+
+  .body__stats {
+    margin-bottom: 1rem;
+  }
+
+  .body__search {
+    width: 100%;
+  }
+}
+
 .body__stats > * {
   margin-right: 2rem;
 }
@@ -81,8 +96,45 @@
   align-items: center;
 }
 
+@media screen and (max-width: 360px) {
+  .body__list-row {
+    font-size: 1.1rem;
+  }
+}
+
 .ReactVirtualized__Table__headerRow.body__list-row {
   border: none;
+}
+
+@media screen and (max-width: 760px) {
+  .body__list-cell_public,
+  .body__list-header_public {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .body__list-header {
+    display: none;
+  }
+
+  .body__list {
+    padding: 1rem;
+  }
+
+  .ReactVirtualized__Table__headerRow {
+    height: 0px !important;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .body__list-header_version {
+    display: none;
+  }
+
+  .body__list-cell_version {
+    display: none;
+  }
 }
 
 .body__list-cell_name {

@@ -28,6 +28,13 @@
   border-bottom: 0.3rem solid var(--primary-color);
 }
 
+@media screen and (max-width: 360px) {
+  .header__logo-text {
+    font-size: 1.4rem;
+    border-bottom-width: 0.2rem;
+  }
+}
+
 .header__logo-text span {
   margin-right: 1rem;
 }

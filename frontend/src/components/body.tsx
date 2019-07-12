@@ -87,6 +87,7 @@ function Body(p: TProps) {
                         label=""
                         dataKey="name"
                         className="body__list-cell body__list-cell_name text-bold"
+                        headerClassName="body__list-header"
                         width={width - (width / columns) * 4}
                         cellRenderer={data => <>{data.rowData.name}</>}
                       />
@@ -94,7 +95,8 @@ function Body(p: TProps) {
                       <Column
                         label="public"
                         dataKey="public"
-                        className="body__list-cell"
+                        headerClassName="body__list-header body__list-header_public"
+                        className="body__list-cell body__list-cell_public"
                         width={width / columns}
                         cellRenderer={data =>
                           data.rowData.version.includes("n") ? (
@@ -120,6 +122,7 @@ function Body(p: TProps) {
                         label="password"
                         dataKey="password"
                         className="body__list-cell"
+                        headerClassName="body__list-header"
                         width={width / columns}
                         cellRenderer={data => (
                           <>
@@ -135,6 +138,7 @@ function Body(p: TProps) {
                         label="online"
                         dataKey="online"
                         className="body__list-cell text-bold text-accent"
+                        headerClassName="body__list-header"
                         width={width / columns}
                         cellRenderer={data => <>{data.rowData.players}</>}
                       />
@@ -142,7 +146,8 @@ function Body(p: TProps) {
                       <Column
                         label="version"
                         dataKey="version"
-                        className="body__list-cell text-bold"
+                        className="body__list-cell body__list-cell_version text-bold"
+                        headerClassName="body__list-header body__list-header_version"
                         width={width / columns}
                         cellRenderer={data => (
                           <>{parseFloat(data.rowData.version)}</>
