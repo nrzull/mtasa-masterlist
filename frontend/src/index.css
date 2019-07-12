@@ -1,4 +1,16 @@
-@import url("https://fonts.googleapis.com/css?family=Roboto:400,600,700&display=swap");
+@font-face {
+  font-family: "Roboto";
+  font-display: auto;
+  src: url("~@/assets/Roboto-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-display: auto;
+  src: url("~@/assets/Roboto-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
 
 :root {
   --text-color: #eee;

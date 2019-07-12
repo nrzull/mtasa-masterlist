@@ -43,7 +43,7 @@ const config = {
       },
 
       {
-        test: /\.png$/,
+        test: /\.(png|ttf)$/,
         include: SRC,
         use: "file-loader"
       },
