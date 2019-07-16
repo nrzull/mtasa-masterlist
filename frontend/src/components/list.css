@@ -1,0 +1,113 @@
+.list {
+  background-color: #3a3a3a;
+  box-shadow: 0 1rem 1rem rgba(0, 0, 0, 0.1);
+  border: 0.1rem solid rgba(255, 255, 255, 0.05);
+  padding: 5rem 3rem 0;
+}
+
+.list * {
+  outline: none;
+}
+
+.list__server-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.list__server-icon_disabled {
+  cursor: not-allowed;
+}
+
+.list__header {
+  font-size: 1rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  user-select: none;
+}
+
+.list__header_name {
+  text-align: left;
+}
+
+.list__header-sort-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.list__header-sort-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
+}
+
+.list__header-sort-icon[data-up="true"] {
+  transform: rotateZ(180deg);
+}
+
+.list *[data-accent="false"],
+.list *[data-accent="false"] * {
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.list *[data-accent="true"],
+.list *[data-accent="true"] * {
+  fill: var(--primary-color);
+}
+
+.list__row {
+  display: flex;
+  font-size: 1.3rem;
+  justify-content: space-between;
+  text-align: center;
+  border-bottom: 0.2rem solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+}
+
+@media screen and (max-width: 360px) {
+  .list__row {
+    font-size: 1.1rem;
+  }
+}
+
+.ReactVirtualized__Table__headerRow.list__row {
+  border: none;
+}
+
+@media screen and (max-width: 760px) {
+  .list__cell_public,
+  .list__header_public {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .list__header {
+    display: none;
+  }
+
+  .list {
+    padding: 1rem;
+  }
+
+  .ReactVirtualized__Table__headerRow {
+    height: 0px !important;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .list__header_version {
+    display: none;
+  }
+
+  .list__cell_version {
+    display: none;
+  }
+}
+
+.list__cell_name {
+  text-align: left;
+}
