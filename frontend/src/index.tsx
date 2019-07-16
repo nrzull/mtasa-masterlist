@@ -15,11 +15,7 @@ function App() {
     fetch("/api/list")
       .then(res => res.json())
       .then((servers: TServerList) => {
-        setList(
-          servers
-            .filter(s => !!s.name)
-            .sort((s1, s2) => (s1.players >= s2.players ? -1 : 1))
-        );
+        setList(servers.filter(s => !!s.name));
         setTimeout(fetchList, 1000 * 30);
       });
   };
