@@ -3,7 +3,6 @@
 }
 
 .body__toolbox {
-  padding-bottom: 4rem;
   text-transform: uppercase;
   font-weight: 700;
   font-size: 1.2rem;
@@ -12,10 +11,18 @@
   justify-content: space-between;
 }
 
+.body__options-container {
+  padding: 2rem 0 4rem;
+}
+
 @media screen and (max-width: 450px) {
   .body__toolbox {
     display: block;
     padding-bottom: 1rem;
+  }
+
+  .body__options-container {
+    padding: 1rem 0 2rem;
   }
 
   .body__stats {

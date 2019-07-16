@@ -3,14 +3,32 @@ import React, { useState, ComponentProps } from "react";
 import { TServerList } from "@/types";
 import SearchIcon from "@/assets/search.svg";
 import { List } from "@/components/list";
+import { Checkbox } from "@/components/checkbox";
 
 interface TProps extends ComponentProps<"div"> {
   list: TServerList;
 }
 
+type TOptionNames = "locked" | "empty" | "full";
+
+type TOptionStorage = {
+  locked: boolean;
+  empty: boolean;
+  full: boolean;
+};
+
+const optionsStorageKey = "body-options";
+const optionsStorageResult: string = localStorage.getItem(optionsStorageKey);
+const optionsStorage: TOptionStorage = optionsStorageResult
+  ? JSON.parse(optionsStorageResult)
+  : { empty: true, full: true, locked: true };
+
 function Body(p: TProps) {
   const [filter, setFilter] = useState("");
   const [filterRegex, setFilterRegex] = useState(new RegExp(""));
+  const [locked, setLocked] = useState(optionsStorage.locked);
+  const [empty, setEmpty] = useState(optionsStorage.empty);
+  const [full, setFull] = useState(optionsStorage.full);
 
   const onFilter = ev => {
     setFilter(ev.currentTarget.value);
@@ -22,7 +40,37 @@ function Body(p: TProps) {
     return servers.filter(server => server.name.match(filterRegex));
   };
 
-  const list = doFilter(p.list);
+  const onOption = (name: TOptionNames) => ev => {
+    switch (name) {
+      case "locked": {
+        optionsStorage.locked = ev.currentTarget.checked;
+        localStorage.setItem(optionsStorageKey, JSON.stringify(optionsStorage));
+        return setLocked(ev.currentTarget.checked);
+      }
+
+      case "empty": {
+        optionsStorage.empty = ev.currentTarget.checked;
+        localStorage.setItem(optionsStorageKey, JSON.stringify(optionsStorage));
+        return setEmpty(ev.currentTarget.checked);
+      }
+
+      case "full": {
+        optionsStorage.full = ev.currentTarget.checked;
+        localStorage.setItem(optionsStorageKey, JSON.stringify(optionsStorage));
+        return setFull(ev.currentTarget.checked);
+      }
+    }
+  };
+
+  const doOption = (servers: TServerList) => {
+    if (!locked) servers = servers.filter(s => s.password != 1);
+    if (!empty) servers = servers.filter(s => s.players != 0);
+    if (!full) servers = servers.filter(s => s.players != s.maxplayers);
+
+    return servers;
+  };
+
+  const list = doOption(doFilter(p.list));
 
   return (
     <div className="body">
@@ -54,6 +102,20 @@ function Body(p: TProps) {
             />
             <SearchIcon className="body__search-icon" />
           </div>
+        </div>
+
+        <div className="body__options-container">
+          <Checkbox onChange={onOption("locked")} checked={locked}>
+            Locked
+          </Checkbox>
+
+          <Checkbox onChange={onOption("empty")} checked={empty}>
+            Empty
+          </Checkbox>
+
+          <Checkbox onChange={onOption("full")} checked={full}>
+            Full
+          </Checkbox>
         </div>
 
         {!!list.length && <List list={list} />}
