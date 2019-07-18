@@ -4,8 +4,7 @@ services:
     container_name: frontend
     build: ./frontend
     volumes:
-      - static:/temp
-    command: "cp -r dist /temp/frontend"
+      - static:/project/dist
   backend:
     container_name: backend
     build: ./backend
@@ -19,7 +18,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - static:/usr/share/nginx
+      - static:/usr/share/nginx/frontend
     networks:
       - local-network
 volumes:
