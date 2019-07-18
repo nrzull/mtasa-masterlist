@@ -79,8 +79,8 @@ fn fetch_loop() {
 
 pub fn get() -> Option<Vec<Server>> {
     unsafe {
-        if let Some(v) = &LIST {
-            Some(v.lock().unwrap().clone())
+        if let Some(list) = &LIST {
+            Some(list.lock().unwrap().clone())
         } else {
             None
         }
@@ -105,15 +105,15 @@ pub fn fetch() -> Result<(), String> {
     let headers = response.headers();
     let mut continue_fetch = true;
 
-    if let Some(v) = headers.get("Last-Modified") {
-        let v = v.to_owned().to_str().unwrap().to_owned();
+    if let Some(header) = headers.get("Last-Modified") {
+        let header = header.to_owned().to_str().unwrap().to_owned();
 
         unsafe {
-            if let Some(a) = &LAST_MODIFIED_HEADER {
-                if a == &v {
+            if let Some(previous_header) = &LAST_MODIFIED_HEADER {
+                if previous_header == &header {
                     continue_fetch = false
                 } else {
-                    LAST_MODIFIED_HEADER = Some(v);
+                    LAST_MODIFIED_HEADER = Some(header);
                 }
             }
         }
@@ -144,9 +144,8 @@ fn fetch_force() -> Result<(), String> {
     let servers = process(Bytes::from(buffer));
 
     unsafe {
-        if let Some(v) = &LIST {
-            let mut data = v.lock().unwrap();
-            *data = servers;
+        if let Some(list) = &LIST {
+            *list.lock().unwrap() = servers;
         }
     }
 
