@@ -70,6 +70,13 @@ function Body(p: TProps) {
     return servers;
   };
 
+  const getPlayersCount = list => {
+    return list.reduce((acc, server) => {
+      acc += server.players;
+      return acc;
+    }, 0);
+  };
+
   const list = doOption(doFilter(p.list));
 
   return (
@@ -83,12 +90,7 @@ function Body(p: TProps) {
 
             <span>
               online:{" "}
-              <span className="text-accent">
-                {list.reduce((acc, curr) => {
-                  acc += curr.players;
-                  return acc;
-                }, 0)}
-              </span>
+              <span className="text-accent">{getPlayersCount(list)}</span>
             </span>
           </div>
 

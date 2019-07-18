@@ -17,14 +17,6 @@ const ASE_HAS_GAME_MODE: u32 = 0x0040;
 const ASE_HAS_MAP_NAME: u32 = 0x0080;
 const ASE_HAS_SERVER_VERSION: u32 = 0x0100;
 const ASE_HAS_PASSWORDED_FLAG: u32 = 0x0200;
-const ASE_HAS_SERIALS_FLAG: u32 = 0x0400;
-const ASE_HAS_PLAYER_LIST: u32 = 0x0800;
-const ASE_HAS_RESPONDING_FLAG: u32 = 0x1000;
-const ASE_HAS_RESTRICTION_FLAGS: u32 = 0x2000;
-const ASE_HAS_SEARCH_IGNORE_SECTIONS: u32 = 0x4000;
-const ASE_HAS_KEEP_FLAG: u32 = 0x8000;
-const ASE_HAS_HTTP_PORT: u32 = 0x080000;
-const ASE_HAS_SPECIAL_FLAGS: u32 = 0x100000;
 
 static mut LAST_MODIFIED_HEADER: Option<String> = None;
 static mut LIST: Option<Arc<Mutex<Vec<Server>>>> = None;
@@ -87,6 +79,8 @@ pub fn get() -> Option<Vec<Server>> {
     }
 }
 
+/// Fetches raw data from MTA masterlist.
+/// It will not fetch if raw data from MTA masterlist wasn't changed since last fetch
 pub fn fetch() -> Result<(), String> {
     let head_client = reqwest::Client::new();
     let response = head_client.head(URI).send();
@@ -131,6 +125,7 @@ pub fn fetch() -> Result<(), String> {
     Ok(())
 }
 
+/// Forces fetching of raw data from MTA masterlist, processes and then stores it
 fn fetch_force() -> Result<(), String> {
     let response = reqwest::get(URI);
 
@@ -152,6 +147,7 @@ fn fetch_force() -> Result<(), String> {
     Ok(())
 }
 
+/// Processes raw data from MTA masterlist and then returns vector of servers
 fn process(data: Bytes) -> Vec<Server> {
     let mut offset = 0usize;
     let _length = get_u16(&data, &mut offset);
@@ -168,19 +164,14 @@ fn process(data: Bytes) -> Vec<Server> {
     let has_map_mame = flags & ASE_HAS_MAP_NAME;
     let has_server_version = flags & ASE_HAS_SERVER_VERSION;
     let has_passworded_flag = flags & ASE_HAS_PASSWORDED_FLAG;
-    let has_serials_slag = flags & ASE_HAS_SERIALS_FLAG;
-    let has_player_list = flags & ASE_HAS_PLAYER_LIST;
-    let has_responding_flag = flags & ASE_HAS_RESPONDING_FLAG;
-    let has_restriction_flags = flags & ASE_HAS_RESTRICTION_FLAGS;
-    let has_search_ignore_sections = flags & ASE_HAS_SEARCH_IGNORE_SECTIONS;
-    let has_keep_flag = flags & ASE_HAS_KEEP_FLAG;
-    let has_http_port = flags & ASE_HAS_HTTP_PORT;
-    let has_special = flags & ASE_HAS_SPECIAL_FLAGS;
 
     let mut servers: Vec<Server> = vec![];
 
     for _ in 0..count {
+        // Get overall length of buffer that related to processing server
         let entry_length = get_u16(&data, &mut offset);
+
+        // Get starting point for next server buffer
         let next_offset = offset + entry_length as usize - 2;
         let mut server = Server::new();
 
@@ -202,6 +193,7 @@ fn process(data: Bytes) -> Vec<Server> {
             server.maxplayers = Some(get_u16(&data, &mut offset));
         }
 
+        // Skip gamename data
         if has_game_name != 0 {
             get_string(&data, &mut offset);
         }
@@ -210,10 +202,12 @@ fn process(data: Bytes) -> Vec<Server> {
             server.name = Some(get_string(&data, &mut offset));
         }
 
+        // Skip gamemode data
         if has_game_mode != 0 {
             get_string(&data, &mut offset);
         }
 
+        // Skip mapname data
         if has_map_mame != 0 {
             get_string(&data, &mut offset);
         }
@@ -226,47 +220,6 @@ fn process(data: Bytes) -> Vec<Server> {
             server.password = Some(get_u8(&data, &mut offset));
         }
 
-        if has_serials_slag != 0 {
-            get_u8(&data, &mut offset);
-        }
-
-        if has_player_list != 0 {
-            let count = get_u16(&data, &mut offset);
-
-            for _ in 0..count {
-                get_string(&data, &mut offset);
-            }
-        }
-
-        if has_responding_flag != 0 {
-            get_u8(&data, &mut offset);
-        }
-
-        if has_restriction_flags != 0 {
-            get_u32(&data, &mut offset);
-        }
-
-        if has_search_ignore_sections != 0 {
-            let count = get_u8(&data, &mut offset);
-
-            for _ in 0..count {
-                get_u8(&data, &mut offset);
-                get_u8(&data, &mut offset);
-            }
-        }
-
-        if has_keep_flag != 0 {
-            get_u8(&data, &mut offset);
-        }
-
-        if has_http_port != 0 {
-            get_u16(&data, &mut offset);
-        }
-
-        if has_special != 0 {
-            get_u8(&data, &mut offset);
-        }
-
         servers.push(server);
         offset = next_offset;
     }
@@ -274,6 +227,7 @@ fn process(data: Bytes) -> Vec<Server> {
     servers
 }
 
+/// Takes 1 byte from buffer and then returns unsigned 8 bit integer
 fn get_u8(buffer: &Bytes, offset: &mut usize) -> u8 {
     let buf = buffer.slice(*offset, *offset + 1);
     *offset += buf.len();
@@ -283,6 +237,7 @@ fn get_u8(buffer: &Bytes, offset: &mut usize) -> u8 {
     cursor.read_u8().unwrap()
 }
 
+/// Takes 2 bytes from buffer, transforms it and then returns unsigned 16 bit integer
 fn get_u16(buffer: &Bytes, offset: &mut usize) -> u16 {
     let buf = buffer.slice(*offset, *offset + 2);
     *offset += buf.len();
@@ -292,6 +247,7 @@ fn get_u16(buffer: &Bytes, offset: &mut usize) -> u16 {
     cursor.read_u16::<BigEndian>().unwrap()
 }
 
+/// Takes 4 bytes from buffer, transforms it and then returns unsigned 32 bit integer
 fn get_u32(buffer: &Bytes, offset: &mut usize) -> u32 {
     let buf = buffer.slice(*offset, *offset + 4);
     *offset += buf.len();
@@ -301,6 +257,7 @@ fn get_u32(buffer: &Bytes, offset: &mut usize) -> u32 {
     cursor.read_u32::<BigEndian>().unwrap()
 }
 
+/// Takes length of string from buffer and then returns related string
 fn get_string(buffer: &Bytes, offset: &mut usize) -> String {
     let length = get_u8(buffer, offset);
     let mut string = String::from("");

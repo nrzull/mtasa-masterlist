@@ -15,7 +15,7 @@ function App() {
     fetch("/api/list")
       .then(res => res.json())
       .then((servers: TServerList) => {
-        setList(servers.filter(s => !!s.name));
+        setList(servers);
         setTimeout(fetchList, 1000 * 30);
       });
   };
