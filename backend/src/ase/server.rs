@@ -1,4 +1,4 @@
-use crate::utils;
+// use crate::utils;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream, UdpSocket};
 use std::str;
 use std::time::Duration;
@@ -134,8 +134,5 @@ fn process<'a>(buf: &'a [u8], start: &mut usize, end: &mut usize, length: &mut u
     let slice = &buf[*start..*end];
     *start = *end;
 
-    match str::from_utf8(&slice) {
-        Ok(v) => v.to_owned(),
-        Err(_) => utils::get_safe_string(slice.to_owned()),
-    }
+    String::from_utf8_lossy(slice).into_owned()
 }

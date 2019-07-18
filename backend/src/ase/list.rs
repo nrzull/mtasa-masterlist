@@ -1,4 +1,3 @@
-use crate::utils;
 use byteorder::{BigEndian, ReadBytesExt};
 use bytes::Bytes;
 use reqwest;
@@ -306,18 +305,13 @@ fn get_u32(buffer: &Bytes, offset: &mut usize) -> u32 {
 fn get_string(buffer: &Bytes, offset: &mut usize) -> String {
     let length = get_u8(buffer, offset);
     let mut string = String::from("");
+    let mut character_storage: Vec<u8> = vec![];
 
-    let mut utf8_storage: Vec<u8> = vec![];
     for i in 0..length {
-        let character = get_u8(buffer, offset);
-        utf8_storage.push(character);
+        character_storage.push(get_u8(buffer, offset));
 
         if i + 1 == length {
-            if let Ok(v) = std::str::from_utf8(&utf8_storage) {
-                string.push_str(v);
-            } else {
-                string.push_str(&utils::get_safe_string(utf8_storage.clone()));
-            }
+            string = String::from_utf8_lossy(&character_storage).into_owned();
         }
     }
 
